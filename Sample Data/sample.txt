@@ -1,0 +1,11 @@
+CONFIDENTIAL: Q3 Internal Security Audit Report
+Date: July 2, 2026
+Prepared by: Ramesh Kumar, EMP-4598
+
+During the internal review of our proprietary database, we found several exposed customer records that violate the DPDP Act. 
+
+For example, Alice Smith's profile contains her unencrypted email (alice.smith@example.com) and her contact number +91 9123456789. 
+Her payment and tax details were also logged in plain text, showing her PAN card BZXYZ9876K and Aadhaar Number 4567-8901-2345.
+
+Furthermore, a former developer left a production API key in the backend logs: sk-9876543210abcdef1234567890abcdef12345.
+Please ensure this document is kept strictly confidential.

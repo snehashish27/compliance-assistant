@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Compliance Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- LEFT: Engine Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🛡️</div>
+            <h2>Data Compliance Platform</h2>
+        </div>
+        <hr>
+        <div class="engine-stack">
+            <h3>Engine Stack</h3>
+            <div class="engine-item">
+                <span class="icon">📄</span>
+                <div class="details">
+                    <span class="name">Parser</span>
+                    <span class="tech">PyMuPDF · EasyOCR</span>
+                </div>
+                <span class="badge active">ACTIVE</span>
+            </div>
+            <div class="engine-item">
+                <span class="icon">🔒</span>
+                <div class="details">
+                    <span class="name">Masker</span>
+                    <span class="tech">Regex · spaCy NLP</span>
+                </div>
+                <span class="badge active">ACTIVE</span>
+            </div>
+            <div class="engine-item">
+                <span class="icon">🧠</span>
+                <div class="details">
+                    <span class="name">Index</span>
+                    <span class="tech">FAISS Vector DB</span>
+                </div>
+                <span class="badge active">ACTIVE</span>
+            </div>
+            <div class="engine-item">
+                <span class="icon">🤖</span>
+                <div class="details">
+                    <span class="name">LLM</span>
+                    <span class="tech">Gemini 3.5 Pro</span>
+                </div>
+                <span class="badge active">ACTIVE</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CENTER: Upload + Results -->
+    <div class="main-content">
+        <div class="header">
+            <div class="title-area">
+                <h1>🛡️ Data Compliance &amp; Risk Dashboard</h1>
+                <p>Upload documents → PII is redacted locally → AI evaluates regulatory risk. Raw sensitive data never reaches the LLM.</p>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="upload-container" id="upload-section">
+            <div class="dropzone-area">
+                <div class="dropzone" id="dropzone">
+                    <p>Drop files to initiate security scan</p>
+                    <input type="file" id="fileInput" multiple accept=".pdf,.txt,.csv" style="display: none;">
+                    <button id="browseBtn">Browse Files</button>
+                    <p class="hint">Accepts PDF · TXT · CSV | Multiple files supported | Max 200 MB per file</p>
+                </div>
+                <div class="selected-files" id="selectedFiles"></div>
+                <button id="analyzeBtn" class="primary-btn" disabled>🚀 Analyze Documents</button>
+            </div>
+            <div class="guarantee-box">
+                <h4>🔒 Privacy Guarantee</h4>
+                <ol>
+                    <li>Files parsed on-device</li>
+                    <li>PII masked before any API call</li>
+                    <li>Only anonymized text → LLM</li>
+                    <li>No raw data stored</li>
+                </ol>
+            </div>
+        </div>
+
+        <div id="progress-container" class="hidden">
+            <h3>⚙️ Processing Pipeline</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">Analyzing...</p>
+        </div>
+
+        <div id="results-container" class="hidden">
+            <div class="metrics-row">
+                <div class="metric-card risk-card">
+                    <div class="icon">⚠️</div>
+                    <div class="label">Risk Tier</div>
+                    <div class="value" id="riskValue">Low Risk</div>
+                    <div class="sub">Calculated from entity profile</div>
+                </div>
+                <div class="metric-card total-card">
+                    <div class="icon">🔍</div>
+                    <div class="label">Sensitive Entities</div>
+                    <div class="value" id="totalValue">0</div>
+                    <div class="sub"><span id="distinctCount">0</span> distinct types detected</div>
+                </div>
+                <div class="metric-card docs-card">
+                    <div class="icon">📁</div>
+                    <div class="label">Documents Scanned</div>
+                    <div class="value" id="docsValue">0</div>
+                    <div class="sub">All payloads anonymized</div>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <div class="report-grid">
+                    <div class="entities-col">
+                        <h3>🔵 Detected Entities</h3>
+                        <div id="entitiesList"></div>
+                        <h3 class="mt-4">Distribution</h3>
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                    <div class="ai-col">
+                        <div class="ai-col-header">
+                            <h3>🤖 AI Compliance Observations</h3>
+                            <button id="downloadReportBtn" class="download-btn" style="display:none;"
+                                title="Download report as Markdown">⬇ Download Report</button>
+                        </div>
+                        <div id="reportGenerateArea">
+                            <div class="report-cta-box">
+                                <div class="report-cta-icon">📑</div>
+                                <h4>Compliance Report Ready to Generate</h4>
+                                <p>The AI will analyze detected entities and produce a structured assessment aligned with DPDP Act 2023 and DPDP Rules 2025.</p>
+                                <button id="generateReportBtn" class="primary-btn generate-report-btn">⚡ Generate Compliance Report</button>
+                            </div>
+                        </div>
+                        <div class="ai-report-box" id="aiReportBox" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESIZE HANDLE between main and right panel -->
+    <div class="resize-handle" id="resizeHandle" title="Drag to resize">
+        <div class="resize-grip"></div>
+    </div>
+
+    <!-- RIGHT PANEL: Tabbed (Chat | Payload) -->
+    <div class="right-panel" id="rightPanel">
+
+        <!-- Tab bar -->
+        <div class="rp-tabs">
+            <button class="rp-tab active" data-tab="rp-chat">💬 Document Chat</button>
+            <button class="rp-tab" data-tab="rp-payload">👁️ Sanitized Payload</button>
+        </div>
+
+        <!-- Chat tab -->
+        <div class="rp-pane active" id="rp-chat">
+            <div class="right-placeholder" id="chatPlaceholder">
+                <div class="placeholder-icon">💬</div>
+                <h4>Upload a Document First</h4>
+                <p>The chat interface activates after analysis completes.</p>
+                <div class="suggestion-chips">
+                    <div class="chip">"Summarize the key risks"</div>
+                    <div class="chip">"What PII was found?"</div>
+                    <div class="chip">"List compliance gaps"</div>
+                </div>
+            </div>
+
+            <div class="chat-section hidden" id="chatSection">
+                <div class="chat-history" id="chatHistory">
+                    <div class="chat-placeholder" id="chatInitPlaceholder">
+                        <div class="icon">💬</div>
+                        <h4>Ready to answer your questions</h4>
+                        <p>Try: "Summarize key risks" · "What PII was found?"</p>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Ask about the document...">
+                    <button id="sendBtn">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payload tab -->
+        <div class="rp-pane" id="rp-payload">
+            <div class="rp-pane-header">
+                <div>
+                    <div class="rp-col-title">👁️ Sanitized Payload</div>
+                    <div class="rp-col-subtitle">Exact text sent to FAISS &amp; Gemini</div>
+                </div>
+                <button id="downloadPayloadBtn" class="download-btn">⬇ Download</button>
+            </div>
+
+            <div class="right-placeholder" id="payloadPlaceholder">
+                <div class="placeholder-icon">👁️</div>
+                <h4>No Document Loaded</h4>
+                <p>Analyze a document to view the anonymized payload here.</p>
+            </div>
+
+            <div class="payload-content hidden" id="payloadContent">
+                <textarea id="rawPayload" readonly></textarea>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
